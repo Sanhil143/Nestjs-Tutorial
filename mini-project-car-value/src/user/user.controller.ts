@@ -24,20 +24,34 @@ export class UserController {
     private authService: AuthService,
   ) {}
 
+  @Get('/whoami')
+  whoAmI(@Session() session:any){
+    return this.userService.findOne(session.userId)
+  }
+
+  @Post('/signout')
+  signout(@Session() session: any) {
+    session.userId = null;
+    return "signout successfully";
+  } 
+
   @Post('/signup')
-  async createUser(@Body() body: CreateUserDto) {
+  async createUser(@Body() body: CreateUserDto,@Session() session:any) {
     const user = await this.authService.signup(body.email, body.password);
+    session.userId = user.userId
     return user;
   }
 
   @Post('/signin')
-  async signin(@Body() body: CreateUserDto) {
+  async signin(@Body() body: CreateUserDto,@Session() session:any) {
     const user = await this.authService.signin(body.email, body.password);
+    session.userId = user.userId
     return user;
   }
 
   @Get('/:id')
   async findUser(@Param('id') id: string) {
+    console.log(id);
     const user = await this.userService.findOne(parseInt(id));
     return user;
   }
