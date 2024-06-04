@@ -6,26 +6,34 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  Session,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { userDto } from './dto/user.dto';
 import { Serialize } from '../interceptors/serialize.interceptor';
+import { AuthService } from './auth.service';
 
 @Controller('auth')
 @Serialize(userDto)
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
-  @Post('signup')
+  @Post('/signup')
   async createUser(@Body() body: CreateUserDto) {
-    const user = await this.userService.create(body.email, body.password);
-    if (user.userId) {
-      return { status: true, message: 'user signup successfully' };
-    } else {
-      return { status: false, message: 'error during signup' };
-    }
+    const user = await this.authService.signup(body.email, body.password);
+    return user;
+  }
+
+  @Post('/signin')
+  async signin(@Body() body: CreateUserDto) {
+    const user = await this.authService.signin(body.email, body.password);
+    return user;
   }
 
   @Get('/:id')
@@ -35,9 +43,9 @@ export class UserController {
   }
 
   @Serialize(userDto)
-  @Get()
-  findAllUser() {
-    return this.userService.find();
+  @Get('/')
+  findAllUser(@Query('email') email: string) {
+    return this.userService.find(email);
   }
 
   @Patch('/:id')
